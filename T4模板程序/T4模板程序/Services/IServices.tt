@@ -1,0 +1,69 @@
+﻿<#@ template language="C#" hostspecific="True" debug="false"#>
+<#@include file="../Manager.ttinclude"#>
+<#@ assembly name="System"#>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+
+<#@ assembly name="System.Data.DataSetExtensions" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Data.SqlClient" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
+<# var manager = Manager.Create(Host, GenerationEnvironment); #>
+<#
+            string ModelNameSpace=Manager.ModelNameSpace;
+            string ConnectStr =Manager.ConnectStr ;
+            SqlConnection MySqlConnection = new SqlConnection(ConnectStr);
+            //此sql语句找到你指定数据库下的所有表
+            string SelectYourTableNameStr = "SELECT * FROM sys.sysobjects WHERE TYPE='U'";
+            SqlDataAdapter MySqlDataAdapter = new SqlDataAdapter(SelectYourTableNameStr, MySqlConnection);
+            DataSet MyDataSet = new DataSet();
+            MySqlDataAdapter.Fill(MyDataSet, "cacheTable");
+            //得到table表
+            DataTable MyDataTable = MyDataSet.Tables["cacheTable"];
+            int MyDataTableRowsCount = MyDataTable.Rows.Count;
+            for (int i = 0; i < MyDataTableRowsCount; i++)
+            {
+                  if(MyDataTable.Rows[i]["name"].ToString().Contains("Migration"))
+                   continue;
+
+                  if(Manager.oneTable){
+                     if(!MyDataTable.Rows[i]["name"].ToString().Contains(Manager.oneTableName))
+                     continue;
+                  }
+                //tt模板输出文件
+                manager.StartNewFile("I"+MyDataTable.Rows[i]["name"].ToString() +"Services"+".cs");
+#>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using IServices;
+using Repository;
+namespace <#=ModelNameSpace#>
+{
+<#
+        ///正则表达式 判断,类名是否有数字下划线
+        Regex resRegex=new Regex("[0-9.]");
+        string dataTableName=MyDataTable.Rows[i]["name"].ToString();
+        if(resRegex.IsMatch(dataTableName)){
+            dataTableName="C"+dataTableName;
+        }
+#>
+   ///using Model;
+    /// <summary>
+    /// 负责每个数据表的数据操作
+    /// </summary>
+    public  partial interface I<#=dataTableName+"Services"#>:IBaseServices<<#=dataTableName#>>
+    {
+        #region 针对此表的特殊操作写在此处
+        
+        #endregion
+    }
+}
+<#              //代码结束
+                manager.EndBlock();
+                MySqlConnection.Close();
+            }
+#>
+<# manager.Process(true); #>
