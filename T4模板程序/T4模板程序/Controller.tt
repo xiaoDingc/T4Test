@@ -1,0 +1,136 @@
+﻿<#@ template language="C#" hostspecific="True" debug="false"#>
+<#@include file="Manager.ttinclude"#>
+<#@ assembly name="System"#>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+
+<#@ assembly name="System.Data.DataSetExtensions" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Data.SqlClient" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
+<# var manager = Manager.Create(Host, GenerationEnvironment); #>
+<#
+			string ModelNameSpace=Manager.ModelNameSpace;
+			string ConnectStr =Manager.ConnectStr ;
+			SqlConnection MySqlConnection = new SqlConnection(ConnectStr);
+			//此sql语句找到你指定数据库下的所有表
+			string SelectYourTableNameStr = "SELECT * FROM sys.sysobjects WHERE TYPE='U'";
+			SqlDataAdapter MySqlDataAdapter = new SqlDataAdapter(SelectYourTableNameStr, MySqlConnection);
+			DataSet MyDataSet = new DataSet();
+			MySqlDataAdapter.Fill(MyDataSet, "cacheTable");
+			//得到table表
+			DataTable MyDataTable = MyDataSet.Tables["cacheTable"];
+			int MyDataTableRowsCount = MyDataTable.Rows.Count;
+			for (int i = 0; i < MyDataTableRowsCount; i++)
+			{
+				if(MyDataTable.Rows[i]["name"].ToString().Contains("Migration"))
+				   continue;
+				if(Manager.oneTable){
+				   if(!MyDataTable.Rows[i]["name"].ToString().Contains(Manager.oneTableName))
+				   continue;
+				}
+				
+				//表名
+				//MyDataTable.Rows[i]["name"].ToString();
+				//此sql语句找到你当前表下的所有键值，属性，是否为null，长度.     
+				string SelectYourKeyStr=@"SELECT  a.object_id , A.name AS table_name, B.name AS column_name,ss.keyproperty,ss.isnullable, ss.length,
+						CONVERT(varchar(200), cp.value) AS column_description
+							FROM sys.tables A INNER JOIN sys.columns B
+							ON B.object_id = A.object_id LEFT JOIN sys.extended_properties cp
+							ON cp.major_id = B.object_id AND cp.minor_id = B.column_id 
+							join 
+							(SELECT syscolumns.id, syscolumns.name as keyname,systypes.name as keyproperty,syscolumns.isnullable,syscolumns.length 
+							FROM syscolumns, systypes 
+							WHERE syscolumns.xusertype = systypes.xusertype 
+							AND syscolumns.id = object_id('"+ MyDataTable.Rows[i]["name"]+"'))ss on a.object_id=ss.id and B.name=ss.keyname";
+
+
+				MySqlDataAdapter = new SqlDataAdapter(SelectYourKeyStr, MySqlConnection);
+				 MyDataSet = new DataSet();
+				MySqlDataAdapter.Fill(MyDataSet, "cacheTable");
+				//得到key表
+				DataTable MyKeyTable = MyDataSet.Tables["cacheTable"];
+				//tt模板输出文件
+				manager.StartNewFile(MyDataTable.Rows[i]["name"].ToString() +"Controller.cs");
+#>
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using IServices;
+using Model;
+namespace <#=ModelNameSpace#>
+{
+
+<#
+		///正则表达式 判断,类名是否有数字下划线
+		Regex resRegex=new Regex("[0-9.]");
+		string dataTableName=MyDataTable.Rows[i]["name"].ToString();
+		
+		if(resRegex.IsMatch(dataTableName)){
+			dataTableName="C"+dataTableName;
+		}
+		string lowerDataTableName=dataTableName.Substring(0, 1).ToLower()+dataTableName.Substring(1);
+
+
+#>
+	//[SkipCheckLogin123]
+	public  class <#=dataTableName #>Controller //: Controller
+	{
+
+		#region DI
+
+		public <#=dataTableName #>Controller(I<#=dataTableName #>Service <#=lowerDataTableName #>)
+		{
+			_<#=lowerDataTableName #> = <#=lowerDataTableName #>;
+		}
+
+		I<#=dataTableName #>Service _<#=lowerDataTableName #> { get; }
+
+		#endregion
+
+		#region 获取
+
+		public async Task<PageResult<<#=dataTableName #>>> GetDataList(PageInput<<#=dataTableName #>> input)
+		{
+			return await _<#=lowerDataTableName #>.GetDataListAsync(input);
+		}
+
+		public async Task<<#=dataTableName #>> GetTheData(IdInputDTO input)
+		{
+			return await _<#=lowerDataTableName #>.GetTheDataAsync(input.id);
+		}
+
+		#endregion
+
+		#region 提交
+
+		public async Task SaveData(<#=dataTableName #> data)
+		{
+			if (data.Id.IsNullOrEmpty())
+			{
+				InitEntity(data);
+
+				await _<#=lowerDataTableName #>.AddDataAsync(data);
+			}
+			else
+			{
+				await _<#=lowerDataTableName #>.UpdateDataAsync(data);
+			}
+		}
+
+		public async Task DeleteData(List<string> ids)
+		{
+			await _<#=lowerDataTableName #>.DeleteDataAsync(ids);
+		}
+
+		#endregion
+
+
+	}
+}
+<#              //代码结束
+				manager.EndBlock();
+				MySqlConnection.Close();
+			}
+#>
+<# manager.Process(true); #>
