@@ -25,20 +25,13 @@ class Manager {
     }
 
     public static  string ModelNameSpace="T4模板程序";
-<<<<<<< HEAD
     public static  string ConnectStr="Data Source=.;database=192.168.13.19;initial catalog=DLUACS;user id=sa;password=123;integrated Security =true;";
-=======
-    public static  string ConnectStr="Data Source=.;database=MGLims;integrated Security =true;";
->>>>>>> 2c29966356d66a77e45a613dcbcefd5a50e23617
 
     //单表和多表生成 如果为true,则位单表否则位多表
     public static  bool oneTable =true;
     //该表在 上述database中,若不存在,则无法生成
-<<<<<<< HEAD
+
     public static  string oneTableName="Crane_Alarm_His";
-=======
-    public static  string oneTableName="B_Department";
->>>>>>> 2c29966356d66a77e45a613dcbcefd5a50e23617
 
     private Block currentBlock;
     private List<Block> files = new List<Block>();
