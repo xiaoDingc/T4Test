@@ -10,8 +10,12 @@ namespace T4模板程序
     {
         static void Main(string[] args)
         {
+<<<<<<< HEAD
             string testName = "Abc";
             var ress = testName.Substring(0, 1).ToLower() + testName.Substring(1);
+=======
+               
+>>>>>>> 2c29966356d66a77e45a613dcbcefd5a50e23617
         }
     }
 }

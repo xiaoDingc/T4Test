@@ -11,6 +11,7 @@
 <#@ import namespace="System.Text.RegularExpressions" #>
 <# var manager = Manager.Create(Host, GenerationEnvironment); #>
 <#
+<<<<<<< HEAD
 			string ModelNameSpace=Manager.ModelNameSpace;
 			string ConnectStr =Manager.ConnectStr ;
 			SqlConnection MySqlConnection = new SqlConnection(ConnectStr);
@@ -53,11 +54,56 @@
 				DataTable MyKeyTable = MyDataSet.Tables["cacheTable"];
 				//tt模板输出文件
 				manager.StartNewFile(MyDataTable.Rows[i]["name"].ToString() +".cs");
+=======
+            string ModelNameSpace=Manager.ModelNameSpace;
+            string ConnectStr =Manager.ConnectStr ;
+            SqlConnection MySqlConnection = new SqlConnection(ConnectStr);
+            //此sql语句找到你指定数据库下的所有表
+            string SelectYourTableNameStr = "SELECT * FROM sys.sysobjects WHERE TYPE='U'";
+            SqlDataAdapter MySqlDataAdapter = new SqlDataAdapter(SelectYourTableNameStr, MySqlConnection);
+            DataSet MyDataSet = new DataSet();
+            MySqlDataAdapter.Fill(MyDataSet, "cacheTable");
+            //得到table表
+            DataTable MyDataTable = MyDataSet.Tables["cacheTable"];
+            int MyDataTableRowsCount = MyDataTable.Rows.Count;
+            for (int i = 0; i < MyDataTableRowsCount; i++)
+            {
+                if(MyDataTable.Rows[i]["name"].ToString().Contains("Migration"))
+                   continue;
+                if(Manager.oneTable){
+                   if(!MyDataTable.Rows[i]["name"].ToString().Contains(Manager.oneTableName))
+                   continue;
+                }
+                
+                //表名
+                //MyDataTable.Rows[i]["name"].ToString();
+                //此sql语句找到你当前表下的所有键值，属性，是否为null，长度.     
+                string SelectYourKeyStr=@"SELECT  a.object_id , A.name AS table_name, B.name AS column_name,ss.keyproperty,ss.isnullable, ss.length,
+                        CONVERT(varchar(200), cp.value) AS column_description
+	                        FROM sys.tables A INNER JOIN sys.columns B
+	                        ON B.object_id = A.object_id LEFT JOIN sys.extended_properties cp
+	                        ON cp.major_id = B.object_id AND cp.minor_id = B.column_id 
+	                        join 
+	                        (SELECT syscolumns.id, syscolumns.name as keyname,systypes.name as keyproperty,syscolumns.isnullable,syscolumns.length 
+                            FROM syscolumns, systypes 
+                            WHERE syscolumns.xusertype = systypes.xusertype 
+                            AND syscolumns.id = object_id('"+ MyDataTable.Rows[i]["name"]+"'))ss on a.object_id=ss.id and B.name=ss.keyname";
+
+
+                MySqlDataAdapter = new SqlDataAdapter(SelectYourKeyStr, MySqlConnection);
+                 MyDataSet = new DataSet();
+                MySqlDataAdapter.Fill(MyDataSet, "cacheTable");
+                //得到key表
+                DataTable MyKeyTable = MyDataSet.Tables["cacheTable"];
+                //tt模板输出文件
+                manager.StartNewFile(MyDataTable.Rows[i]["name"].ToString() +".cs");
+>>>>>>> 2c29966356d66a77e45a613dcbcefd5a50e23617
 #>
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+<<<<<<< HEAD
 namespace Model
 {
 
@@ -176,5 +222,125 @@ namespace Model
 				manager.EndBlock();
 				MySqlConnection.Close();
 			}
+=======
+namespace <#=ModelNameSpace#>
+{
+
+<#
+        ///正则表达式 判断,类名是否有数字下划线
+        Regex resRegex=new Regex("[0-9.]");
+        string dataTableName=MyDataTable.Rows[i]["name"].ToString();
+        if(resRegex.IsMatch(dataTableName)){
+            dataTableName="C"+dataTableName;
+        }
+
+
+#>
+    /// <summary>
+    /// 
+    /// </summary>
+    public  partial class <#=dataTableName #>
+    {
+<#       for (int keyi = 0; keyi < MyKeyTable.Rows.Count; keyi++)
+        {
+            
+            string column_description="";
+            if(MyKeyTable.Rows[keyi]["column_description"].ToString()!=null ){
+                column_description=MyKeyTable.Rows[keyi]["column_description"].ToString();
+            }
+    
+            if(MyKeyTable.Rows[keyi]["column_name"].ToString().ToLower()=="id"){
+                column_description="主键"+MyKeyTable.Rows[keyi]["column_name"].ToString();
+            }
+            //key名
+            //MyKeyTable.Rows[keyi]["keyname"].ToString();
+            //属性
+            //MyKeyTable.Rows[keyi]["keyproperty"].ToString().ToLower();
+            //是否null
+            //MyKeyTable.Rows[keyi]["isnullable"].ToString();
+
+            //整型：tinyint   smallint     int    bigint
+            //精确型：decimal   numeric   
+            //近似型 float    real     
+            //日期类型：datetime   
+            // 特殊数据型  cursor timestamp   uniqueidentifier    
+            //货币型smallmoney    money
+
+            //输出的C#属性
+            string keypropertyOutput = string.Empty;
+            
+            switch (MyKeyTable.Rows[keyi]["keyproperty"].ToString().ToLower())
+            {
+                case "smallint":
+                    keypropertyOutput = "short";
+                    break;
+                case "int":
+                    keypropertyOutput = "int";
+                    break;
+                case "bigint":
+                    keypropertyOutput = "long";
+                    break;
+                case "real":
+                    keypropertyOutput = "float";
+                    break;
+                case "float":
+                    keypropertyOutput = "double";
+                    break;
+                 case "decimal":
+                    keypropertyOutput = "decimal";
+                    break;
+                case "money":
+                    keypropertyOutput = "decimal";
+                    break;
+                case "datetime2":
+                    keypropertyOutput = "DateTime";
+                    break;
+                case "uniqueidentifier":
+                    keypropertyOutput = "Guid";
+                    break;
+                case "bit":
+                    keypropertyOutput = "bool";
+                    break;
+                case "tinyint":
+                    keypropertyOutput = "byte";
+                    break;
+                case "image":
+                    keypropertyOutput = "byte[]";
+                    break;
+                case "binary":
+                    keypropertyOutput = "byte[]";
+                    break;
+                default:
+                    keypropertyOutput = "string";
+                        break;
+            }
+
+
+            //可为null且不是string（就是值类型）可以加?
+            if (MyKeyTable.Rows[keyi]["isnullable"].ToString()=="1"&& keypropertyOutput!="string")
+            {
+                if (keypropertyOutput == "byte[]")
+                {
+                    keypropertyOutput = "byte?[]";
+                }
+                else
+                {
+                    keypropertyOutput = keypropertyOutput + "?";
+                }
+            }
+#>
+        /// <summary>
+        /// <#=column_description #>
+        /// </summary>
+        public  <#=keypropertyOutput#>  <#=MyKeyTable.Rows[keyi]["column_name"].ToString()#>  { get; set; }
+
+<#  }#>
+    }
+}
+<#              //代码结束
+                manager.EndBlock();
+                MySqlConnection.Close();
+            }
+>>>>>>> 2c29966356d66a77e45a613dcbcefd5a50e23617
 #>
 <# manager.Process(true); #>

@@ -38,8 +38,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+<<<<<<< HEAD
 using Model;
 namespace IServices
+=======
+using IServices;
+using Repository;
+namespace <#=ModelNameSpace#>
+>>>>>>> 2c29966356d66a77e45a613dcbcefd5a50e23617
 {
 <#
         ///正则表达式 判断,类名是否有数字下划线
@@ -53,7 +59,11 @@ namespace IServices
     /// <summary>
     /// 负责每个数据表的数据操作
     /// </summary>
+<<<<<<< HEAD
     public  partial interface I<#=dataTableName+"Service"#>:IBaseServices<<#=dataTableName#>>
+=======
+    public  partial interface I<#=dataTableName+"Services"#>:IBaseServices<<#=dataTableName#>>
+>>>>>>> 2c29966356d66a77e45a613dcbcefd5a50e23617
     {
         #region 针对此表的特殊操作写在此处
         

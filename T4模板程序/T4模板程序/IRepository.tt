@@ -41,8 +41,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Repository;
+<<<<<<< HEAD
 using Model;
 namespace IRepository
+=======
+namespace <#=ModelNameSpace#>
+>>>>>>> 2c29966356d66a77e45a613dcbcefd5a50e23617
 {
 <#
         ///正则表达式 判断,类名是否有数字下划线
