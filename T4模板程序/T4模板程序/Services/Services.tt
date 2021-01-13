@@ -37,15 +37,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-<<<<<<< HEAD
 using IServices;
 using Model;
 using IRepository;
 namespace Services
-=======
-using Services;
-namespace <#=ModelNameSpace#>
->>>>>>> 2c29966356d66a77e45a613dcbcefd5a50e23617
 {
 <#
         ///正则表达式 判断,类名是否有数字下划线
@@ -59,11 +54,7 @@ namespace <#=ModelNameSpace#>
     /// <summary>
     /// 负责每个数据表的数据操作
     /// </summary>
-<<<<<<< HEAD
     public  partial class <#=dataTableName+"Services"#>:BaseServices<<#=dataTableName#>>,I<#=dataTableName#>Service
-=======
-    public  partial class <#=dataTableName+"Services"#>:BaseServices<<#=dataTableName#>>,I<#=dataTableName#>Services
->>>>>>> 2c29966356d66a77e45a613dcbcefd5a50e23617
     {
          I<#=dataTableName#>Repository dal;
          #region 定义构造函数，接收autofac将数据仓储层的具体实现类的对象注入到此类中
